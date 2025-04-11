@@ -39,10 +39,9 @@ function getUsers(link) {
 }
 getUsers("https://dummyjson.com/users").
     then(users => {
-    // for(const user of users) {
-    // 		console.log(user.address.postalCode)
-    // }
-    console.log(users);
+    for (const user of users) {
+        console.log(user.address.postalCode);
+    }
 }).catch(err => {
     if (err instanceof Error) {
         console.log(err);
