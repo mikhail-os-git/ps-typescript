@@ -1,5 +1,5 @@
-function createByKeys<O, K extends keyof O>(obj: O, keys: K[]): Pick<O,K> {
-	const temp: Pick<O,K> = {} as Pick<O,K>;
+function createByKeys<O, K extends keyof O>(obj: O, keys: K[]): O {
+	const temp: O = {} as O;
 	for(const key of keys){
 		if(!Array.isArray(obj[key])) {
 			temp[key] = obj[key];
