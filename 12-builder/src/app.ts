@@ -162,7 +162,7 @@ function ValidateBody(){
 		if (this["queryType"] === "POST") {
 			const validTypes = ["string", "object"];
 			if (!validTypes.includes(typeof newVal)) {
-				throw new Error("The POST request body must be string, object (JSON), or FormData.");
+				throw new Error("The POST request body must be string, object (JSON).");
 			}
 		}
 
