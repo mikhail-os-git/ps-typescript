@@ -48,7 +48,7 @@ class QueryBuilder implements IQueryMethods{
 	get queryType(){
 		return this._queryType
 	}
-	get header() {
+	get headers() {
 		return this._headers
 	}
 	get body() {
