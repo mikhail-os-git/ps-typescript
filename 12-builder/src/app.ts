@@ -24,15 +24,15 @@ interface IQueryMethods {
 
 type TRequest = {
 	method: QUERY_TYPE,
-	header: THeader<QUERY_TYPE>,
+	headers: THeader<QUERY_TYPE>,
 	body?: string,
 	url: string
 }
 
-class QueryBuilder implements  IQueryMethods{
+class QueryBuilder implements IQueryMethods{
 	private _queryType!: QUERY_TYPE;
 	@ValidateHeader()
-	private _header!: THeader<QUERY_TYPE>;
+	private _headers!: THeader<QUERY_TYPE>;
 	@ValidateBody()
 	private _body?: TBody<QUERY_TYPE>;
 	private _url!: string;
@@ -49,7 +49,7 @@ class QueryBuilder implements  IQueryMethods{
 		return this._queryType
 	}
 	get header() {
-		return this._header
+		return this._headers
 	}
 	get body() {
 		return this._body;
@@ -60,8 +60,8 @@ class QueryBuilder implements  IQueryMethods{
 		return this;
 	}
 
-	public setHeader<T extends THeader<QUERY_TYPE>>(header: T) {
-		this._header = header;
+	public setHeader<T extends THeader<QUERY_TYPE>>(headers: T) {
+		this._headers = headers;
 		return this;
 	}
 
@@ -78,7 +78,7 @@ class QueryBuilder implements  IQueryMethods{
 	public build(): TRequest{
 		const res: TRequest = {
 			method: this._queryType,
-			header: this._header,
+			headers: this._headers,
 			url: this._url
 		}
 
