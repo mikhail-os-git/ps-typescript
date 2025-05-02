@@ -14,27 +14,21 @@ type TBody<T extends QUERY_TYPE> =
 	: unknown
 
 interface IQueryMethods {
-	setQueryType<T extends QUERY_TYPE>(type: T): this,
-	setHeader<T extends THeader<QUERY_TYPE>>(header: T): this,
-	setBody<T extends TBody<QUERY_TYPE>>(body: T): this
+	setQueryType<T extends QUERY_TYPE>(type: T): QueryBuilder<T>,
+	setHeader(header: THeader<QUERY_TYPE>): this,
+	setBody(body: TBody<QUERY_TYPE>): this
 	setUrl(url: string): this,
-	build(): TRequest
+	build(): RequestInit,
+	exec(): Promise<any | undefined>
 }
 
 
-type TRequest = {
-	method: QUERY_TYPE,
-	headers: THeader<QUERY_TYPE>,
-	body?: string,
-	url: string
-}
-
-class QueryBuilder implements IQueryMethods{
-	private _queryType!: QUERY_TYPE;
+class QueryBuilder<T extends QUERY_TYPE> implements IQueryMethods{
+	private _queryType!: T;
 	@ValidateHeader()
-	private _headers!: THeader<QUERY_TYPE>;
+	private _headers!: THeader<T>;
 	@ValidateBody()
-	private _body?: TBody<QUERY_TYPE>;
+	private _body?: TBody<T>;
 	private _url!: string;
 
 	constructor();
@@ -55,17 +49,18 @@ class QueryBuilder implements IQueryMethods{
 		return this._body;
 	}
 
-	public setQueryType<T extends QUERY_TYPE>(type: T) {
-		this._queryType = type;
-		return this;
+	public setQueryType<NT extends QUERY_TYPE>(type: NT) {
+		const  newSB = new QueryBuilder<NT>(this._url)
+		newSB._queryType = type;
+		return newSB;
 	}
 
-	public setHeader<T extends THeader<QUERY_TYPE>>(headers: T) {
+	public setHeader(headers: THeader<T>) {
 		this._headers = headers;
 		return this;
 	}
 
-	public setBody<T extends TBody<QUERY_TYPE>>(body: T){
+	public setBody(body: TBody<T>){
 		this._body = body;
 		return this;
 	}
@@ -75,11 +70,10 @@ class QueryBuilder implements IQueryMethods{
 		return this;
 	}
 
-	public build(): TRequest{
-		const res: TRequest = {
+	public build(){
+		const res: RequestInit = {
 			method: this._queryType,
 			headers: this._headers,
-			url: this._url
 		}
 
 		if(this._body != undefined){
@@ -93,7 +87,7 @@ class QueryBuilder implements IQueryMethods{
 		return res;
 	}
 
-	async exec(): Promise<any | undefined>{
+	async exec(){
 		try{
 			const request = await fetch(this._url, this.build());
 			if(!request.ok){
@@ -121,26 +115,19 @@ function ValidateHeader(){
 	{
 		let value: any;
 
-		const getter = function() {return value; }
-		const setter = function(this: QueryBuilder, newVal: THeader<QUERY_TYPE>) {
-		if(this["queryType"] === "GET"){
-			if ('Content-Type' in newVal) {
-					throw new Error("'Content-Type' is not allowed for GET requests.");
-			}
-		}
-
-		if (this["queryType"] === "POST") {
-				if (!('Content-Type' in newVal)) {
-					throw new Error("'Content-Type' is required for POST requests.");
-				}
-			}
-
-			value = newVal;
-		}
-
 		Object.defineProperty(target, propertyKey, {
-			set: setter,
-			get: getter
+			get: () => value,
+			set: function(newVal: Record<string, any>){
+				const qt = this.queryType;
+				if (qt === "GET" && "Content-Type" in newVal) {
+					throw new Error("'Content-Type' is not allowed for GET.");
+				}
+				if (qt === "POST" && !("Content-Type" in newVal)) {
+					throw new Error("'Content-Type' is required for POST.");
+				}
+				
+				value = newVal;
+			},
 		})
 	}
 }
@@ -151,27 +138,24 @@ function ValidateBody(){
 	{
 		let value: any;
 
-		const getter = function() {return value; }
-		const setter = function(this: QueryBuilder, newVal: TBody<QUERY_TYPE>) {
-		if(this["queryType"] === "GET"){
-			if (newVal !== undefined && newVal !== null) {
+		Object.defineProperty(target, propertyKey, {
+			get: () => value,
+			set: function(newVal: object | string){
+				const qt = this.queryType;
+				if(qt === "GET" && (newVal !== undefined && newVal !== null)){
 					throw new Error("The GET request type should not have a 'body'.");
 				}
-		}
 
-		if (this["queryType"] === "POST") {
-			const validTypes = ["string", "object"];
-			if (!validTypes.includes(typeof newVal)) {
-				throw new Error("The POST request body must be string, object (JSON).");
+				if(qt === "POST"){
+					const validTypes = ["string", "object"];
+					if (!validTypes.includes(typeof newVal)) {
+						throw new Error("The POST request body must be string, object (JSON).");
+					}
+				}
+
+				value = newVal;
+
 			}
-		}
-
-			value = newVal;
-		}
-
-		Object.defineProperty(target, propertyKey, {
-			set: setter,
-			get: getter
 		})
 	}
 }
