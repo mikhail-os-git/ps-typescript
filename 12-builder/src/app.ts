@@ -1,29 +1,29 @@
 
-type QUERY_TYPE = "GET" | "POST";
+export type QUERY_TYPE = "GET" | "POST";
 
-type THeader<T extends QUERY_TYPE> = 
+export type THeader<T extends QUERY_TYPE> = 
 	T extends "GET" ? { Authorization?: string; Accept?: string; } :
 	T extends "POST" ? { Authorization?: string; Accept?: string; "Content-Type"?: string } :
 	never;
 
-type TBody<T extends QUERY_TYPE> = 
+export type TBody<T extends QUERY_TYPE> = 
 	T extends "GET" ? never :
 	T extends "POST" ?
 	| string                   
     | { [key: string]: any }
 	: unknown
 
-interface IQueryMethods {
+export interface IQueryMethods {
 	setQueryType<T extends QUERY_TYPE>(type: T): QueryBuilder<T>,
 	setHeader(header: THeader<QUERY_TYPE>): this,
 	setBody(body: TBody<QUERY_TYPE>): this
 	setUrl(url: string): this,
 	build(): RequestInit,
-	exec(): Promise<any | undefined>
+	exec(): Promise<Record<string, unknown> | undefined>
 }
 
 
-class QueryBuilder<T extends QUERY_TYPE> implements IQueryMethods{
+export class QueryBuilder<T extends QUERY_TYPE> implements IQueryMethods{
 	private _queryType!: T;
 	@ValidateHeader()
 	private _headers!: THeader<T>;
@@ -47,6 +47,10 @@ class QueryBuilder<T extends QUERY_TYPE> implements IQueryMethods{
 	}
 	get body() {
 		return this._body;
+	}
+
+	get url(){
+		return this._url;
 	}
 
 	public setQueryType<NT extends QUERY_TYPE>(type: NT) {
@@ -109,7 +113,7 @@ class QueryBuilder<T extends QUERY_TYPE> implements IQueryMethods{
 
 }
 
-function ValidateHeader(){
+export function ValidateHeader(){
 
 	return function(target: Object, propertyKey: string | symbol)
 	{
@@ -132,7 +136,7 @@ function ValidateHeader(){
 	}
 }
 
-function ValidateBody(){
+export function ValidateBody(){
 
 	return function(target: Object, propertyKey: string | symbol)
 	{
@@ -161,8 +165,8 @@ function ValidateBody(){
 }
 
 
-const builder = new QueryBuilder("example.com");
-console.log(builder
-.setQueryType("POST")
-.setHeader({Accept: "test", Authorization: "test", "Content-Type": "Test"})
-.setBody({role: "admin"}).build());
+// const builder = new QueryBuilder("example.com");
+// console.log(builder
+// .setQueryType("POST")
+// .setHeader({Accept: "test", Authorization: "test", "Content-Type": "Test"})
+// .setBody({role: "admin"}).build());
